@@ -1,0 +1,32 @@
+* {
+    /* font-family: '网站主要的字体'; */
+    margin: 0;
+    padding: 0;
+    text-decoration: none;
+    list-style-type: none;
+    outline: none;
+    /* 是否去除button和a的默认按下背景高亮 */
+    /* -webkit-tap-highlight-color: transparent; */
+}
+
+img {
+    /* 去除图片的空隙 */
+    vertical-align: middle;
+    /* 禁止图片被长按选中/另存 */
+    -webkit-touch-callout: none;
+    pointer-events: none;
+}
+
+/* 去除textarea的默认样式 */
+textarea {
+    margin: 0;
+    padding: 0;
+    border: none;
+    outline: none;
+    background: none;
+    resize: none;
+    font-family: inherit;
+    font-size: inherit;
+    font-weight: inherit;
+    line-height: inherit;
+}

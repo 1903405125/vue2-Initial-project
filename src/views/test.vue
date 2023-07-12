@@ -1,7 +1,5 @@
 <template>
-  <div id='app'>
-    <router-view/>
-  </div>
+  <div id='test'>123</div>
 </template>
 
 <script>
@@ -15,6 +13,6 @@
   }
 </script>
 
-<style lang='less'>
+<style lang='less' scope>
 
 </style>
