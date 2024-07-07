@@ -6,16 +6,17 @@ Vue.use(VueRouter)
 const routes = [
   {
     path: '/',
-    name: 'test',
+    name: 'main',
     meta:{
-      title:'测试页面'
+      title:'倒计时'
     },
-    component: ()=>import('../views/test.vue'),
+    component: ()=>import('../views/main.vue'),
   },
 ]
 
 const router = new VueRouter({
-  mode: 'history',
+  // 临时改为哈希，因为需要本地打开
+  mode: 'hash',
   routes
 })
 
