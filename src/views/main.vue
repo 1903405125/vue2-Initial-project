@@ -134,6 +134,7 @@
 </template>
 
 <script>
+import Worker from "worker-loader!../assets/js/worker.js";
 import { formatSeconds, formatTime } from "@/assets/util/index";
 export default {
   data() {
@@ -148,6 +149,7 @@ export default {
       lastTime: null,
       titleFlickerTimer: {},
       pageIsShow: true,
+      timerWorker: null,
     };
   },
   watch: {
@@ -162,7 +164,6 @@ export default {
       },
     },
   },
-  // 注：如果回调函数要指定为methods中的函数，那么必须用字符串包裹，例如：handler:'abc'
   methods: {
     handleVisibilityChange() {
       // 页面可见性发生变化时触发
@@ -258,28 +259,29 @@ export default {
         }
       }, 200);
     },
+    updateCountdown(index, id, keyName) {
+      var index2 = this.idFindIndex(id);
+      if (index2 === null) {
+        // 没找到，说明被删除了，那么清除定时器
+        this.timerWorker.postMessage({action:'stop',index:index2,id,keyName})
+      }
+      // 每过一秒减一
+      var time = this.tableData[index2][keyName] + 0;
+      time--;
+      // 当
+      if (time > 0) {
+        // 更新倒计时显示
+        this.tableData[index2][keyName] = time;
+      } else {
+        // 倒计时结束时的处理
+        this.timerWorker.postMessage({action:'stop',index:index2,id,keyName})
+        this.tableData[index2][keyName] = "已刷新";
+        this.upPriority(id);
+        // this.titleFlicker("已刷新");
+      }
+    },
     // 倒计时函数
     startCountdown(time, id, keyName) {
-      var updateCountdown = () => {
-        var index2 = this.idFindIndex(id);
-        if (index2 === null) {
-          // 没找到，说明被删除了，那么清除定时器
-          clearInterval(this.tableData[index2].remainTimer);
-        }
-        // 每过一秒减一
-        time--;
-        // 当
-        if (time > 0) {
-          // 更新倒计时显示
-          this.tableData[index2][keyName] = time;
-        } else {
-          // 倒计时结束时的处理
-          clearInterval(this.tableData[index2].remainTimer);
-          this.tableData[index2][keyName] = "已刷新";
-          this.upPriority(id);
-          this.titleFlicker("已刷新");
-        }
-      };
       var index = this.idFindIndex(id);
       // 进来首先更新下剩余时间的显示
       this.tableData[index][keyName] = time;
@@ -295,7 +297,9 @@ export default {
         // 将定时器存到相应的对象里面去
         // 首次进来先赋值，防止无法看到第一秒
         this.tableData[index][keyName] = time;
-        this.tableData[index].remainTimer = setInterval(updateCountdown, 1000);
+        // this.tableData[index].remainTimer = setInterval(()=>this.updateCountdown(index ,id, keyName), 1000);
+        console.log('◀️')
+        this.timerWorker.postMessage({ action: "start", index, id, keyName });
       }
     },
     // 根据id找到index
@@ -310,8 +314,7 @@ export default {
     // 清除该对象的所有定时器
     clearObjAllTimer(id) {
       // 清除剩余时间
-      clearInterval(this.tableData[this.idFindIndex(id)].remainTimer);
-      //
+      this.timerWorker.postMessage({action:'stop',index:this.idFindIndex(id),id})
     },
     // 修改地图名
     editMapName(id) {
@@ -519,9 +522,25 @@ export default {
         return aa - bb;
       });
     },
+    // 创建web worker主线程
+    createWorker() {
+      this.timerWorker = new Worker();
+      // 接收来自分线程的消息
+      this.timerWorker.onmessage = (e) => {
+        const { action, index, id, keyName } = e.data;
+        // 说明1秒走完了
+        if (action === "ok") {
+          this.updateCountdown(index, id, keyName);
+          // 说明清除定时器成功
+        } else if (action === "gg") {
+          // 说明清除所有定时器成功
+        } else if (action === "gg_all") {
+        }
+      };
+    },
   },
   created() {
-    console.log("🧵");
+    this.createWorker();
     // 获取本地存储的数据
     this.tableData = localStorage.getItem("tableData")
       ? JSON.parse(localStorage.getItem("tableData"))
@@ -543,7 +562,11 @@ export default {
   },
   mounted() {
     // 监听页面的可见性变化
-    document.addEventListener("visibilitychange", this.handleVisibilityChange);
+    // document.addEventListener("visibilitychange", this.handleVisibilityChange);
+  },
+  beforeDestroy() {
+    // 清除web worker
+    this.timerWorker.postMessage('stopAll')
   },
 };
 </script>

@@ -9,4 +9,12 @@ module.exports = defineConfig({
       打包时候需要求改为 ./ 如果没有人用任何非网络路径的就默认 / 就ok了
   */
   publicPath: './', 
+  chainWebpack: config => {
+    config.module
+      .rule('worker')
+      .test(/\.worker\.js$/)
+      .use('worker-loader')
+      .loader('worker-loader')
+      .end();
+  }
 })
